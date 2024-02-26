@@ -1,51 +1,42 @@
 from typing import List
-
-import aiohttp
-import asyncio
 from bs4 import BeautifulSoup as bs
 
-from connect import get_response_text
 
-
-async def get_pages(session, url) -> int:
+async def get_pages(data: str) -> int:
 	"""
 	Функция для получения последней страницы пагинации
-	:param session:
-	:param url:
-	:return:
+	:param data: полученные данные с сайта
+	:return: возвращает кол-во страниц
 	"""
-	resp = await get_response_text(session, url)
-	soup = bs(resp, "lxml")
-	data = soup.find_all(class_="bloko-button")
+	soup = bs(data, "lxml")
+	data = soup.find_all("a", class_="bloko-button", )
 	last_page = int(data[-2].text)
 	return last_page
 
 
-async def get_url_vacancy(session, url: str) -> List:
+async def get_url_vacancy(data: str) -> List:
 	"""
 	Функция для получения url каждой вакансии
-
-	:param session:
-	:param url:
-	:return:
+	:param data: полученные данные с сайта
+	:return: возвращает список адресов вакансий
 	"""
-	resp = await get_response_text(session, url)
-	soup = bs(resp, "lxml")
-	data = soup.find_all(class_="serp-item__title")
+	soup = bs(data, "lxml")
+	data = soup.find("main", class_="vacancy-serp-content")
+	data = data.find_all("a", class_="bloko-link")
 	urls = list(map(lambda x: x.get("href"), data))
 	return urls
 
 
-async def get_data_vacancy(session, url: str) -> List:
+async def get_data_vacancy(data: str) -> List:
 	"""
 	Функция для получения ключевых навыков вакансии
-
-	:param session:
-	:param url:
-	:return:
+	:param data: полученные данные с сайта
+	:return: возвращает ключевые навыки
 	"""
-	resp = await get_response_text(session, url)
-	soup = bs(resp, "lxml")
-	data = soup.find_all(class_="bloko-tag__section bloko-tag__section_text")
+	soup = bs(data, "lxml")
+	data = soup.find_all("span", class_="bloko-tag__section")
 	skills = list(map(lambda x: x.text, data))
 	return skills
+# async with aiofiles.open("data.txt", "a+", encoding="utf-8") as f:
+# 	if skills:
+# 		await f.write(" ".join(skills) + "\n")
